@@ -73,6 +73,7 @@ target_link_libraries(${TARGET_NAME}
   hardware_spi
   tinyusb_device
   tinyusb_board
+  hardware_i2c
 )
 
 # Build additional outputs, including .uf2
