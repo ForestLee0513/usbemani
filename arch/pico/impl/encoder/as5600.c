@@ -19,6 +19,7 @@
 
 // Pin configuration - reuse ENCODER_PINS as I2C pins (SDA, SCL)
 static const _pin_pair_t _encoder_pins[ENCODERS_AVAILABLE] = { ENCODER_PINS };
+static const uint8_t     _encoder_pidx[ENCODERS_ACTIVE]    = { ENCODER_CHANNELS };
 
 // I2C instance selection
 #ifndef ENCODER_I2C_INST
@@ -137,19 +138,16 @@ void _impl_encoder_init(void) {
 
   // Initialize I2C using pins from ENCODER_PINS
   // ENCODER_PINS format: [0] = {SDA, SCL}
-  if (ENCODERS_ACTIVE > 0) {
-    const _pin_t sda_pin = _encoder_pins[0].a;  // First pin is SDA
-    const _pin_t scl_pin = _encoder_pins[0].b;  // Second pin is SCL
-    
+  for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
+    const _pin_t sda_pin = _encoder_pins[_encoder_pidx[i]].a;
+    const _pin_t scl_pin = _encoder_pins[_encoder_pidx[i]].b;
+
     i2c_init(_encoder_i2c, ENCODER_I2C_SPEED);
     gpio_set_function(sda_pin, GPIO_FUNC_I2C);
     gpio_set_function(scl_pin, GPIO_FUNC_I2C);
     gpio_pull_up(sda_pin);
     gpio_pull_up(scl_pin);
-  }
 
-  // Initialize each encoder's position
-  for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
     uint16_t raw_angle = _as5600_read_angle(i) & 0x0FFF;
     
     // Store initial raw value
@@ -160,13 +158,13 @@ void _impl_encoder_init(void) {
     
     // Set logical position to center (uses ENCODER_LOGICAL_MAX from config)
     _encoder[i].position.logical = (ENCODER_LOGICAL_MAX / 2);
-  }
 
-  alarm_pool_add_repeating_timer_us(
-    _impl_arch_alarmPool(),
-    poll,
-    _encoder_interrupt,
-    NULL,
-    &_encoder_timer
-  );
+    alarm_pool_add_repeating_timer_us(
+      _impl_arch_alarmPool(),
+      poll,
+      _encoder_interrupt,
+      NULL,
+      &_encoder_timer
+    );
+  }
 }
