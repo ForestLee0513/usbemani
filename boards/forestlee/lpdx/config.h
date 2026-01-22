@@ -10,9 +10,10 @@
 #define ENCODER_DRIVER as5600
 #define ENCODERS_AVAILABLE 1
 #define ENCODER_PINS [0] = {16,17} // [SDA, SCL]
-/* Optional: I2C instance and speed */
+/* Optional */
 // #define ENCODER_I2C_INST i2c0
 // #define ENCODER_I2C_SPEED 400000
+// #define ENCODER_I2C_ADDRESSES 0x36, 0x37
 
 #define RGB_DRIVER pio
 #define RGB_CHANNELS_AVAILABLE 1

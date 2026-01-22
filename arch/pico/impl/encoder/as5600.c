@@ -1,3 +1,4 @@
+
 #include "hardware/i2c.h"
 #include "pico/stdlib.h"
 
@@ -30,6 +31,11 @@ static const uint8_t     _encoder_pidx[ENCODERS_ACTIVE]    = { ENCODER_CHANNELS 
 #define ENCODER_I2C_SPEED 400000
 #endif
 
+// Support for multiple I2C addresses if needed
+#ifdef ENCODER_I2C_ADDRESSES
+static const uint8_t _encoder_i2c_addrs[ENCODERS_ACTIVE] = { ENCODER_I2C_ADDRESSES };
+#endif
+
 static i2c_inst_t* _encoder_i2c = ENCODER_I2C_INST;
 
 // Our stored repeating timer
@@ -43,8 +49,11 @@ static inline uint16_t _as5600_read_angle(uint8_t encoder_idx) {
   uint8_t data[2];
   uint8_t reg = AS5600_ANGLE_H;
   
-  // Use default AS5600 address
+  // Use custom address if defined, otherwise default
   uint8_t addr = AS5600_ADDR;
+  #ifdef ENCODER_I2C_ADDRESSES
+  addr = _encoder_i2c_addrs[encoder_idx];
+  #endif
   
   i2c_write_blocking(_encoder_i2c, addr, &reg, 1, true);
   i2c_read_blocking(_encoder_i2c, addr, data, 2, false);
@@ -80,7 +89,9 @@ static inline int16_t _as5600_calculate_raw_delta(uint16_t current, uint16_t pre
 // Updates all encoders
 static inline void _encoder_update(void) {
   for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
-    // Decrement direction timeout
+    //// Part 1: State Updates
+    // Decrement timeouts. Clear the currently-set direction if this timeout is depleted.
+    if (_encoder[i].state.timeout)      _encoder[i].state.timeout--;
     if (_encoder[i].direction.timeout)  _encoder[i].direction.timeout--;
     else _encoder[i].direction.current = 0;
 
@@ -97,6 +108,7 @@ static inline void _encoder_update(void) {
     // Store current raw value for next iteration
     _as5600_prev_raw[i] = raw_angle;
     
+    //// Part 2: Value Updates
     // Convert current raw angle to physical position (scaled to ENCODER_STEPS)
     uint16_t physical_position = _as5600_to_physical(raw_angle);
     _encoder[i].position.physical = physical_position;
@@ -136,18 +148,23 @@ void _impl_encoder_init(void) {
   // Use ENCODER_FREQUENCY from config for polling rate
   static const uint poll = (1000000 / ENCODER_FREQUENCY);
 
-  // Initialize I2C using pins from ENCODER_PINS
-  // ENCODER_PINS format: [0] = {SDA, SCL}
+  // Initialize I2C for all active encoders
   for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
-    const _pin_t sda_pin = _encoder_pins[_encoder_pidx[i]].a;
-    const _pin_t scl_pin = _encoder_pins[_encoder_pidx[i]].b;
-
+    const _pin_t sda_pin = _encoder_pins[_encoder_pidx[i]].a;  // Each encoder's SDA
+    const _pin_t scl_pin = _encoder_pins[_encoder_pidx[i]].b;  // Each encoder's SCL
+    
+    // Initialize I2C bus with these pins
+    // Note: If multiple encoders share the same I2C pins, this will be called
+    // multiple times on the same bus, but this is safe (just redundant)
     i2c_init(_encoder_i2c, ENCODER_I2C_SPEED);
     gpio_set_function(sda_pin, GPIO_FUNC_I2C);
     gpio_set_function(scl_pin, GPIO_FUNC_I2C);
     gpio_pull_up(sda_pin);
     gpio_pull_up(scl_pin);
+  }
 
+  // Initialize each encoder's position
+  for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
     uint16_t raw_angle = _as5600_read_angle(i) & 0x0FFF;
     
     // Store initial raw value
@@ -158,13 +175,13 @@ void _impl_encoder_init(void) {
     
     // Set logical position to center (uses ENCODER_LOGICAL_MAX from config)
     _encoder[i].position.logical = (ENCODER_LOGICAL_MAX / 2);
-
-    alarm_pool_add_repeating_timer_us(
-      _impl_arch_alarmPool(),
-      poll,
-      _encoder_interrupt,
-      NULL,
-      &_encoder_timer
-    );
   }
+
+  alarm_pool_add_repeating_timer_us(
+    _impl_arch_alarmPool(),
+    poll,
+    _encoder_interrupt,
+    NULL,
+    &_encoder_timer
+  );
 }
