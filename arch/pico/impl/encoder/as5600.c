@@ -1,7 +1,6 @@
 #include "hardware/i2c.h"
-#include <stdlib.h> // abs() 함수 사용을 위해 추가
+#include <stdlib.h>
 
-// --- 1. 기본값 정의 ---
 #ifndef ENCODER_I2C_INST
 #define ENCODER_I2C_INST i2c0
 #endif
@@ -25,8 +24,6 @@ static const uint8_t     _encoder_addrs[ENCODERS_ACTIVE] = { ENCODER_I2C_ADDRESS
 repeating_timer_t _encoder_timer;
 static int _prev_raw_angles[ENCODERS_ACTIVE] = {0};
 
-// --- 유틸리티 함수 ---
-
 static int as5600_read_reg16(uint8_t i, uint8_t reg) {
     uint8_t buf[2] = {reg, 0x00};
     if (i2c_write_blocking_until(_encoder_buses[i], _encoder_addrs[i], buf, 1, true,
@@ -49,11 +46,8 @@ bool as5600_is_present(uint8_t i) {
     return ret == 1;
 }
 
-// --- 핵심 업데이트 로직 ---
-
 static inline void _encoder_update(void) {
     for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
-        // 타이머 및 상태 관리
         if (_encoder[i].state.timeout)      _encoder[i].state.timeout--;
         if (_encoder[i].direction.timeout)  _encoder[i].direction.timeout--;
         else _encoder[i].direction.current = 0;
@@ -61,21 +55,14 @@ static inline void _encoder_update(void) {
         int raw_angle = as5600_read_reg16(i, AS5600_REG_ANGLE);
         if (raw_angle == -1) continue;
 
-        // 회전 변위(Delta) 계산 및 오버플로우 처리
         int delta = raw_angle - _prev_raw_angles[i];
         if (delta > 2048) delta -= 4096;
         else if (delta < -2048) delta += 4096;
 
-        /* * [민감도 조절의 핵심]
-         * 4096 해상도를 36 PPR로 나누면 한 칸당 약 113.7 유닛입니다.
-         * 노이즈로 인한 떨림을 방지하기 위해 한 칸의 1/4 정도(약 28 유닛)
-         * 이하의 움직임은 무시합니다.
-         */
         const int deadzone = 4096 / (ENCODER_PPR * 4); 
 
         if (abs(delta) < deadzone) continue; 
 
-        // 유효한 움직임이 있을 때만 처리
         if (delta < 0) {
             _encoder[i].position.logical_raw -= ENCODER_LOGICAL_DELTA;
             
@@ -96,7 +83,6 @@ static inline void _encoder_update(void) {
             }
         }
 
-        // 물리적 위치 업데이트 및 이전 각도 갱신
         _encoder[i].position.physical = (raw_angle * ENCODER_PPR) / 4096;
         _prev_raw_angles[i] = raw_angle; 
     }
@@ -108,8 +94,6 @@ bool _encoder_interrupt(repeating_timer_t *rt) {
 }
 
 void _impl_encoder_init(void) {
-    // ENCODER_FREQUENCY가 너무 크면(16000) 반응이 느리므로, 
-    // 가급적 1000~2000(1~2ms)으로 설정하는 것을 권장합니다.
     static const uint poll = ENCODER_FREQUENCY;
 
     for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
@@ -128,12 +112,6 @@ void _impl_encoder_init(void) {
         gpio_pull_up(sda_pin);
         gpio_pull_up(scl_pin);
 
-        if(as5600_is_present(i)) {
-            // 초기 연결 성공 시 온보드 LED 등을 켜서 확인 가능
-            // gpio_put(25, 1); 
-        }
-        
-        // 초기 각도 저장 (부팅 시 튐 방지)
         int init_angle = as5600_read_reg16(i, AS5600_REG_ANGLE);
         if(init_angle != -1) _prev_raw_angles[i] = init_angle;
     }
