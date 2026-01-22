@@ -8,22 +8,22 @@ USBemani's design allows it to support multiple microcontroller platforms, with 
 
 USBemani takes a "configuration first" principle, taking some inspiration from the QMK project by breaking down a given firmware build into the following three core components:
 
-* A `board` determines the availability of capabilities based on the design of the board, such as which microcontroller is used and what pins are made available to users.
-* A `controller` determines what capabilities and components are in use. This defines certain attributes about these components, such as the number of installed RGB LEDs and the PPR of the encoders.
-* A `layout` determines which board and controller are in use, and defines how controller components should be connected to the board. This also provides a home for user customizations, including custom code.
+- A `board` determines the availability of capabilities based on the design of the board, such as which microcontroller is used and what pins are made available to users.
+- A `controller` determines what capabilities and components are in use. This defines certain attributes about these components, such as the number of installed RGB LEDs and the PPR of the encoders.
+- A `layout` determines which board and controller are in use, and defines how controller components should be connected to the board. This also provides a home for user customizations, including custom code.
 
 Documentation on how to create new `boards`, `controllers`, and `layouts` is in progress. Until then, it's suggested to review the following examples:
 
-  * `boards/dev` contains two development board examples: one for the Pro Micro and one for the Raspberry Pi Pico.
-  * `controllers/examples/iidx` contains two example IIDX controllers that match Konami's eAmusement Cloud controllers: one for a 'basic model' and another for a 'premium model'
-  * `layouts/examples/iidx` contains two examples on how to wire these controllers up to a given development board.
+- `boards/dev` contains two development board examples: one for the Pro Micro and one for the Raspberry Pi Pico.
+- `controllers/examples/iidx` contains two example IIDX controllers that match Konami's eAmusement Cloud controllers: one for a 'basic model' and another for a 'premium model'
+- `layouts/examples/iidx` contains two examples on how to wire these controllers up to a given development board.
 
 ### Building USBemani
 
 USBemani requires the setup and installation of a given architecture's toolchain. Documentation on how to do this is in progress. Until then, in general:
 
-* For `avr8` platforms, you will need `avr-gcc` and `make`.
-* For the Raspberry Pi `pico`, you will need `arm-none-eabi-gcc` and `cmake`.
+- For `avr8` platforms, you will need `avr-gcc` and `make`.
+- For the Raspberry Pi `pico`, you will need `arm-none-eabi-gcc` and `cmake`.
 
 #### macOS
 
@@ -44,6 +44,7 @@ cd ./usbemani
 # Build a controller!
 make examples/arduino/pro-micro/iidx:default
 make lain/mini-4:default
+make default/forestlee/lpdx
 ```
 
 #### Linux
@@ -67,6 +68,7 @@ cd ./usbemani
 # Build a controller!
 make examples/arduino/pro-micro/iidx:default
 make lain/mini-4:default
+make default/forestlee/lpdx
 ```
 
 ### What if I have an issue?

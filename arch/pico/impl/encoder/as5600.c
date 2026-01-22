@@ -44,6 +44,13 @@ repeating_timer_t _encoder_timer;
 // Previous raw AS5600 readings for delta calculation
 static uint16_t _as5600_prev_raw[ENCODERS_ACTIVE] = {0};
 
+// Direction multiplier for reversed channels
+#if defined(ENCODER_CHANNELS_REVERSED)
+const int8_t _encoder_direction_multiplier = -1;
+#else
+const int8_t _encoder_direction_multiplier = 1;
+#endif
+
 // Read 16-bit value from AS5600
 static inline uint16_t _as5600_read_angle(uint8_t encoder_idx) {
   uint8_t data[2];
@@ -101,7 +108,9 @@ static inline void _encoder_update(void) {
     
     // Calculate raw delta (in AS5600 native 12-bit units)
     int16_t raw_delta = _as5600_calculate_raw_delta(raw_angle, previous_raw);
-    
+
+    raw_delta *= _encoder_direction_multiplier;
+
     // If no movement, continue to next encoder
     if (raw_delta == 0) continue;
     
