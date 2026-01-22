@@ -8,7 +8,7 @@
 
 /*** Encoders ***/
 #define ENCODERS_ACTIVE 1
-#define ENCODER_PPR     36
+#define ENCODER_PPR     24
 
 /*** RGB ***/
 #define CONTROLLER_RGB_LEDS_TURNTABLE 12
