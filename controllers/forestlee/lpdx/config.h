@@ -10,8 +10,6 @@
 #define ENCODERS_ACTIVE 1
 #define ENCODER_PPR     36
 
-
-
 /*** RGB ***/
 #define CONTROLLER_RGB_LEDS_TURNTABLE 12
 #define CONTROLLER_RGB_LEDS_PER_KEY   4
