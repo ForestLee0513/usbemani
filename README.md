@@ -1,5 +1,11 @@
 # USBemani
 
+⚠️ **Notes for this repository** This repository is a separate Forked repository for AS5600 support.
+We are currently only supporting RP204 and the following features may not work, so please double check before applying that firmware;
+
+- Multi-encoder support
+- AS5600 for avr8 driver
+
 ⚠️ **Work-In-Progress!** This project is in a recent state of flux as development has led to a complete rearchitecture. The contents and documentation of this repository will be changing as items are finalized for release. Until then, please treat this as a sneak peek of what's to come. :)
 
 USBemani is an opinionated, multi-architecture microcontroller firmware aimed at providing the best possible gameplay experience for a number of rhythm game controllers. The name stems from Konami's "Bemani" line of rhythm games, including **beatmania** and **beatmania IIDX**, **Dance Dance Revolution** (DDR), **Sound Voltex** (SDVX), **GuitarFreaks** and **DrumMania** (GitaDora), and **pop'n music**. However, USBemani aims at providing the best possible gameplay experience for all rhythm games, even if they don't fall within the Bemani family.
