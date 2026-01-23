@@ -1,7 +1,7 @@
 # USBemani
 
 ⚠️ **Notes for this repository** This repository is a separate Forked repository for AS5600 support.
-We are currently only supporting RP2040 and the following features may not work, so please double check before applying that firmware;
+We are currently only supporting RP2040 and the following features may not work, so please double check before applying this firmware;
 
 - Multi-encoder support
 - AS5600 for avr8 driver
