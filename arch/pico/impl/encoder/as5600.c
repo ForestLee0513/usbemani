@@ -44,6 +44,8 @@ bool as5600_is_present(uint8_t i) {
 }
 
 static inline void _encoder_update(void) {
+    const uint16_t step = 4096 / ENCODER_PPR;
+
     for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
         if (_encoder[i].state.timeout)      _encoder[i].state.timeout--;
         if (_encoder[i].direction.timeout)  _encoder[i].direction.timeout--;
@@ -53,24 +55,18 @@ static inline void _encoder_update(void) {
         if (raw_angle == -1) continue;
 
         int delta = raw_angle - _prev_raw_angles[i];
-        if (delta > 2048) delta -= 4096;
-        else if (delta < -2048) delta += 4096;
+        if (delta > 2048) {
+            delta -= 4096;
+        } else if (delta < -2048) {
+            delta += 4096;
+        }
 
-        const int deadzone = 4096 / (ENCODER_PPR * 4); 
+        if (abs(delta) < step) continue;
 
-        if (abs(delta) < deadzone) continue; 
-
-        if (delta < 0) {
-            _encoder[i].position.logical_raw -= ENCODER_LOGICAL_DELTA;
-            
-            _encoder[i].direction.delta--;
-            if (_encoder[i].direction.delta <= (ENCODER_DIRECTION_THRESHOLD * -1)) {
-                _encoder[i].direction.delta   = 0;
-                _encoder[i].direction.current = ENCODER_CCW;
-                _encoder[i].direction.timeout = ENCODER_TIMEOUT;
-            }
-        } else {
+        if (delta > 0) {
+            // 시계 방향 회전
             _encoder[i].position.logical_raw += ENCODER_LOGICAL_DELTA;
+            _prev_raw_angles[i] += step;
             
             _encoder[i].direction.delta++;
             if (_encoder[i].direction.delta >= ENCODER_DIRECTION_THRESHOLD) {
@@ -78,10 +74,27 @@ static inline void _encoder_update(void) {
                 _encoder[i].direction.current = ENCODER_CW;
                 _encoder[i].direction.timeout = ENCODER_TIMEOUT;
             }
+        } else {
+            // 반시계 방향 회전
+            _encoder[i].position.logical_raw -= ENCODER_LOGICAL_DELTA;
+            _prev_raw_angles[i] -= step;
+            
+            _encoder[i].direction.delta--;
+            if (_encoder[i].direction.delta <= (ENCODER_DIRECTION_THRESHOLD * -1)) {
+                _encoder[i].direction.delta   = 0;
+                _encoder[i].direction.current = ENCODER_CCW;
+                _encoder[i].direction.timeout = ENCODER_TIMEOUT;
+            }
         }
 
-        _encoder[i].position.physical = (raw_angle * ENCODER_PPR) / 4096;
-        _prev_raw_angles[i] = raw_angle; 
+        // old_angle 범위 정규화 (0~4095)
+        if (_prev_raw_angles[i] >= 4096) {
+            _prev_raw_angles[i] -= 4096;
+        } else if (_prev_raw_angles[i] < 0) {
+            _prev_raw_angles[i] += 4096;
+        }
+
+        _encoder[i].position.physical = (_prev_raw_angles[i] * ENCODER_PPR) / 4096;
     }
 }
 
