@@ -1,37 +1,34 @@
 #include "hardware/i2c.h"
 #include <stdlib.h>
 
-#ifndef ENCODER_I2C_INST
-#define ENCODER_I2C_INST i2c0
+#ifndef AS5600_I2C_INST
+#define AS5600_I2C_INST i2c0
 #endif
 
-#ifndef ENCODER_I2C_SPEED
-#define ENCODER_I2C_SPEED 400000
+#ifndef AS5600_I2C_SPEED
+#define AS5600_I2C_SPEED 400000
 #endif
 
-#ifndef ENCODER_I2C_ADDRESSES
-#define ENCODER_I2C_ADDRESSES 0x36
-#endif
+#define AS5600_I2C_ADDRESS 0x36
 
 #define AS5600_REG_ANGLE 0x0c
 
 static const _pin_pair_t  _encoder_pins[ENCODERS_AVAILABLE] = { ENCODER_PINS };
 static const uint8_t      _encoder_pidx[ENCODERS_ACTIVE]    = { ENCODER_CHANNELS };
 
-static i2c_inst_t *const _encoder_buses[ENCODERS_ACTIVE] = { ENCODER_I2C_INST };
-static const uint8_t     _encoder_addrs[ENCODERS_ACTIVE] = { ENCODER_I2C_ADDRESSES };
+static i2c_inst_t *const _encoder_buses[ENCODERS_ACTIVE] = { AS5600_I2C_INST };
 
 repeating_timer_t _encoder_timer;
 static int _prev_raw_angles[ENCODERS_ACTIVE] = {0};
 
 static int as5600_read_reg16(uint8_t i, uint8_t reg) {
     uint8_t buf[2] = {reg, 0x00};
-    if (i2c_write_blocking_until(_encoder_buses[i], _encoder_addrs[i], buf, 1, true,
+    if (i2c_write_blocking_until(_encoder_buses[i], AS5600_I2C_ADDRESS, buf, 1, true,
                              make_timeout_time_ms(1)) != 1) {
         return -1;
     }
 
-    if (i2c_read_blocking_until(_encoder_buses[i], _encoder_addrs[i], buf, 2, false,
+    if (i2c_read_blocking_until(_encoder_buses[i], AS5600_I2C_ADDRESS, buf, 2, false,
                             make_timeout_time_ms(1)) != 2) {
         return -1;
     }
@@ -41,7 +38,7 @@ static int as5600_read_reg16(uint8_t i, uint8_t reg) {
 
 bool as5600_is_present(uint8_t i) {
     uint8_t buf[1] = {0x0c};
-    int ret = i2c_write_blocking_until(_encoder_buses[i], _encoder_addrs[i], buf, 1, true,
+    int ret = i2c_write_blocking_until(_encoder_buses[i], AS5600_I2C_ADDRESS, buf, 1, true,
                              make_timeout_time_ms(1));
     return ret == 1;
 }
@@ -102,7 +99,7 @@ void _impl_encoder_init(void) {
         const _pin_t sda_pin = _encoder_pins[_encoder_pidx[i]].a;
         const _pin_t scl_pin = _encoder_pins[_encoder_pidx[i]].b;
 
-        i2c_init(i2c_port, ENCODER_I2C_SPEED);
+        i2c_init(i2c_port, AS5600_I2C_SPEED);
 
         gpio_init(sda_pin);
         gpio_init(scl_pin);
