@@ -6,7 +6,7 @@
 /*** Encoders ***/
 #define ENCODER_CHANNELS_REVERSED
 #define ENCODER_CHANNELS                0
-#define ENCODER_FREQUENCY               1000
+#define ENCODER_FREQUENCY               16000
 #define ENCODER_SAMPLES_UNTIL_VALID     255
 #define ENCODER_DIRECTION_THRESHOLD     2
 #define ENCODER_DIRECTION_HOLD_TIMEOUT  200

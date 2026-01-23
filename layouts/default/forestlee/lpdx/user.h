@@ -1,1 +1,0 @@
-#define AS5600_ADDR 0x36

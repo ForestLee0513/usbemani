@@ -1,7 +1,5 @@
 #include "usbemani.h"
 #include "pico/stdlib.h"
-#include "hardware/i2c.h"
-#include "user.h"
 
 const uint8_t offsetKeys  = (7 * CONTROLLER_RGB_LEDS_PER_KEY);
 const uint8_t offsetE     = (4 * 1);
