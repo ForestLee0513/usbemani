@@ -61,28 +61,3 @@ void CALLBACK_OnUSBemaniInputRequest(USB_InputReport_USBemani_t *input) {
     Encoder_Direction(0)
   );
 }
-
-void as5600_setup_i2c() {
-  i2c_init(i2c0, 400000);  // 400kHz
-  gpio_set_function(0, GPIO_FUNC_I2C);  // SDA
-  gpio_set_function(1, GPIO_FUNC_I2C);  // SCL
-  gpio_pull_up(0);
-  gpio_pull_up(1);
-}
-
-void as5600_set_abz_mode() {
-  uint8_t buf[2];
-  
-  buf[0] = 0x07;
-  buf[1] = 0x30;
-  i2c_write_blocking(i2c0, AS5600_ADDR, buf, 2, false);
-  
-  buf[0] = 0x08;
-  buf[1] = 0x00;
-  i2c_write_blocking(i2c0, AS5600_ADDR, buf, 2, false);
-}
-
-void CALLBACK_PostInitialize(void) {
-  as5600_setup_i2c();
-  as5600_set_abz_mode();
-}
