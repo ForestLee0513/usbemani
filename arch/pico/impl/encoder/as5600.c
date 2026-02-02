@@ -44,6 +44,8 @@ bool as5600_is_present(uint8_t i) {
 }
 
 static inline void _encoder_update(void) {
+    static const int DEADZONE = 4096 / (ENCODER_PPR * 4); // 루프 밖으로
+    
     for (uint i = 0; i < ENCODERS_ACTIVE; i++) {
         if (_encoder[i].state.timeout)      _encoder[i].state.timeout--;
         if (_encoder[i].direction.timeout)  _encoder[i].direction.timeout--;
@@ -56,32 +58,63 @@ static inline void _encoder_update(void) {
         if (delta > 2048) delta -= 4096;
         else if (delta < -2048) delta += 4096;
 
-        const int deadzone = 4096 / (ENCODER_PPR * 4); 
+        if (abs(delta) < DEADZONE) continue;
 
-        if (abs(delta) < deadzone) continue; 
+        uint8_t result = (delta < 0) ? ENCODER_CCW : ENCODER_CW;
 
-        if (delta < 0) {
+        if (!_encoder[i].state.pending) {
+            _encoder[i].state.pending = result;
+            _encoder[i].state.timeout = ENCODER_SAMPLES_UNTIL_VALID;
+            continue;
+        }
+        
+        if (result & _encoder[i].state.pending) {
+            _encoder[i].state.timeout = ENCODER_SAMPLES_UNTIL_VALID;
+        } else {
+            _encoder[i].state.pending = 0;
+            _encoder[i].state.timeout = 0;
+            continue;
+        }
+        
+        if (_encoder[i].state.pending && !_encoder[i].state.timeout) {
+            result = _encoder[i].state.pending;
+            _encoder[i].state.pending = 0;
+        } else {
+            continue;
+        }
+
+        if (result & ENCODER_CCW) {
             _encoder[i].position.logical_raw -= ENCODER_LOGICAL_DELTA;
-            
             _encoder[i].direction.delta--;
+            
             if (_encoder[i].direction.delta <= (ENCODER_DIRECTION_THRESHOLD * -1)) {
                 _encoder[i].direction.delta   = 0;
                 _encoder[i].direction.current = ENCODER_CCW;
                 _encoder[i].direction.timeout = ENCODER_TIMEOUT;
             }
+            
+            uint16_t physical = _encoder[i].position.physical;
+            physical--;
+            if (physical >= ENCODER_STEPS) physical = ENCODER_STEPS - 1;
+            _encoder[i].position.physical = physical;
+            
         } else {
             _encoder[i].position.logical_raw += ENCODER_LOGICAL_DELTA;
-            
             _encoder[i].direction.delta++;
+            
             if (_encoder[i].direction.delta >= ENCODER_DIRECTION_THRESHOLD) {
                 _encoder[i].direction.delta   = 0;
                 _encoder[i].direction.current = ENCODER_CW;
                 _encoder[i].direction.timeout = ENCODER_TIMEOUT;
             }
+            
+            uint16_t physical = _encoder[i].position.physical;
+            physical++;
+            if (physical >= ENCODER_STEPS) physical = 0;
+            _encoder[i].position.physical = physical;
         }
 
-        _encoder[i].position.physical = (raw_angle * ENCODER_PPR) / 4096;
-        _prev_raw_angles[i] = raw_angle; 
+        _prev_raw_angles[i] = raw_angle;
     }
 }
 
