@@ -1,10 +1,16 @@
 # USBemani
 
-⚠️ **Notes for this repository** This repository is a separate Forked repository for AS5600 support.
-We are currently only supporting RP2040 and the following features may not work, so please double check before applying this firmware;
+⚠️ **Notes for this repository** This repository is a separate Forked repository for AS5600 support.  
+In this project, It emulate a 'ABZ encoder (PPR based)' from AS5600's raw angle.  
+We are currently only supporting RP2040 and the following features may not work, so please double check before applying this firmware.
 
-- Multi-encoder support
-- AS5600 for avr8 driver
+**❔ Not Tested**
+
+- Multi-encoders support
+
+**❌ Not Support**
+
+- AS5600 driver for avr8
 
 ⚠️ **Work-In-Progress!** This project is in a recent state of flux as development has led to a complete rearchitecture. The contents and documentation of this repository will be changing as items are finalized for release. Until then, please treat this as a sneak peek of what's to come. :)
 
