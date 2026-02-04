@@ -62,27 +62,6 @@ static inline void _encoder_update(void) {
 
         uint8_t result = (delta < 0) ? ENCODER_CCW : ENCODER_CW;
 
-        if (!_encoder[i].state.pending) {
-            _encoder[i].state.pending = result;
-            _encoder[i].state.timeout = ENCODER_SAMPLES_UNTIL_VALID;
-            continue;
-        }
-        
-        if (result & _encoder[i].state.pending) {
-            _encoder[i].state.timeout = ENCODER_SAMPLES_UNTIL_VALID;
-        } else {
-            _encoder[i].state.pending = 0;
-            _encoder[i].state.timeout = 0;
-            continue;
-        }
-        
-        if (_encoder[i].state.pending && !_encoder[i].state.timeout) {
-            result = _encoder[i].state.pending;
-            _encoder[i].state.pending = 0;
-        } else {
-            continue;
-        }
-
         if (result & ENCODER_CCW) {
             _encoder[i].position.logical_raw -= ENCODER_LOGICAL_DELTA;
             _encoder[i].direction.delta--;
